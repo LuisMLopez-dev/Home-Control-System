@@ -1,4 +1,5 @@
 const int kitchenLight = 5; //Kitchen Light Device
+const int livingRoomLight = 6; //Living Room Light Device
 const int onboardLED = 13;
 String incomingSerialMessage = "";
 
@@ -6,6 +7,7 @@ void setup(){
   Serial.begin(9600); //9600 baud rate for serial communication
 
   pinMode(kitchenLight, OUTPUT);
+  pinMode(livingRoomLight, OUTPUT);
   pinMode(onboardLED, OUTPUT);
 
   digitalWrite(onboardLED, LOW); //Ensures the onboard LED remains off after the microcontroller resets, and both the RX and TX lights go off
@@ -40,7 +42,7 @@ void evaluateCommand(String device, String command){ //To be expanded for other 
   device.toUpperCase(); //Formatting for device
   command.toUpperCase(); //Formatting for command
 
-  if (device.equals("KITCHENLIGHT")){
+  if (device.equals("KITCHENLIGHT")){ //Kitchen Light Device is selected
     if (command.equals("ON")){
       digitalWrite(kitchenLight, HIGH);
       Serial.println("Kitchen Light is on.");
@@ -52,7 +54,20 @@ void evaluateCommand(String device, String command){ //To be expanded for other 
     else{
       Serial.println("INVALID COMMAND"); //The serial message was of valid format, but the command selected is not an available command
     }
-  } 
+  }
+  else if(device.equals("LIVINGROOMLIGHT")){ //Living Room Light Device is selected
+    if(command.equals("ON")){
+      digitalWrite(livingRoomLight, HIGH);
+      Serial.println("Living Room Light is on.");
+    }
+    else if(command.equals("OFF")){
+      digitalWrite(livingRoomLight, LOW);
+      Serial.println("Living Room Light is on.");
+    }
+    else{
+      Serial.println("INVALID COMMAND"); //The serial message was of valid format, but the command selected is not an available command
+    }
+  }
   else{
     Serial.println("UNKNOWN DEVICE"); //The serial message was of valid format, but the device selected is not designated to be controlled
   }
