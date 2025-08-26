@@ -1,55 +1,65 @@
-const int kitchenLight = 5; //Kitchen Light Device
-const int livingRoomLight = 6; //Living Room Light Device
+String serialMessage = ""; //The expected format is "DEVICENAME=COMMAND" with each following device name being separated by a space
+boolean serialMessageArrived = false;
+
+const int kitchenLightPin = 5; // Kitchen Light output
+const int livingRoomLightPin = 6; //Living Room Light output
 const int onboardLED = 13;
-String incomingSerialMessage = "";
 
 void setup(){
-  Serial.begin(9600); //9600 baud rate for serial communication
-
-  pinMode(kitchenLight, OUTPUT);
-  pinMode(livingRoomLight, OUTPUT);
+  Serial.begin(9600); //Serial communication at a rate of 9600 baud
+  pinMode(kitchenLightPin, OUTPUT);
+  pinMode(livingRoomLightPin, OUTPUT);
   pinMode(onboardLED, OUTPUT);
-
-  digitalWrite(onboardLED, LOW); //Ensures the onboard LED remains off after the microcontroller resets, and both the RX and TX lights go off
+  digitalWrite(onboardLED, LOW); //Ensures the onboard LED remains off after each reset of the microcontroller
 }
 
-void loop(){ //Loops indefinitely
-  while (Serial.available() > 0){ //As long as there are bytes in the serial buffer, or as long as there is something to be read in the serial buffer
-    char currentSerialCharacter = Serial.read(); 
+void loop(){
+  if(serialMessageArrived){
+    int startIndex = 0; //Acts as a cusor for the serial message
+    serialMessage.trim(); //Eliminates any new lines or formatting characters
+    
+    while(startIndex < serialMessage.length()){
+      int spaceIndex = serialMessage.indexOf(" ", startIndex);
 
-    if (currentSerialCharacter == '\n'){ //If the current character in the serial message is the end-of-line indicator
-      incomingSerialMessage.trim(); //Removes any extra spaces or line breaks from the serial message
-      int spaceIndex = incomingSerialMessage.indexOf(" "); 
+      if(spaceIndex == -1){
+        int equalSignIndex = serialMessage.indexOf("=");
+        String device = serialMessage.substring(startIndex, equalSignIndex);
+        String command = serialMessage.substring(equalSignIndex + 1);
 
-      if (spaceIndex > 0){
-        String device = incomingSerialMessage.substring(0, spaceIndex); //Obtains the name of the device from the serial message
-        String command = incomingSerialMessage.substring(spaceIndex + 1); //Obtains the command from the serial message
-
-        evaluateCommand(device, command);
-      } 
-      else{ //No space was present, or the space was at the beginning
-        Serial.println("INVALID FORMAT");
+        startIndex = serialMessage.length();
+        evaluateSerialMessage(device, command);
       }
-      incomingSerialMessage = ""; //Resets the incoming serial message 
-    } 
-    else{
-      incomingSerialMessage += currentSerialCharacter; //The serial message is stored character by character per iteration of this function
+      else if(spaceIndex > 0){
+        String deviceCommandPair = serialMessage.substring(startIndex, spaceIndex);
+
+        int equalSignIndex = deviceCommandPair.indexOf("=");
+        String device = deviceCommandPair.substring(0, equalSignIndex);
+        String command = deviceCommandPair.substring(equalSignIndex + 1);
+
+        startIndex = spaceIndex + 1;
+        evaluateSerialMessage(device, command);
+      }
+      else{
+        Serial.println("INVALID SERIAL MESSAGE FORMAT");
+      }
     }
+    serialMessage = "";
+    serialMessageArrived = false;
   }
 }
 
-void evaluateCommand(String device, String command){ //To be expanded for other devices
+void evaluateSerialMessage(String device, String command){ //To be expanded for other devices
   device.toUpperCase(); //Formatting for device
   command.toUpperCase(); //Formatting for command
 
-  if (device.equals("KITCHENLIGHT")){ //Kitchen Light Device is selected
-    if (command.equals("ON")){
-      digitalWrite(kitchenLight, HIGH);
-      Serial.println("Kitchen Light is on.");
+  if(device.equals("KITCHENLIGHT")){ //Kitchen Light Device is selected
+    if(command.equals("ON")){
+      digitalWrite(kitchenLightPin, HIGH);
+      Serial.println("The Kitchen Light is on.");
     } 
-    else if (command.equals("OFF")){
-      digitalWrite(kitchenLight, LOW);
-      Serial.println("Kitchen Light is off.");
+    else if(command.equals("OFF")){
+      digitalWrite(kitchenLightPin, LOW);
+      Serial.println("The Kitchen Light is off.");
     } 
     else{
       Serial.println("INVALID COMMAND"); //The serial message was of valid format, but the command selected is not an available command
@@ -57,12 +67,12 @@ void evaluateCommand(String device, String command){ //To be expanded for other 
   }
   else if(device.equals("LIVINGROOMLIGHT")){ //Living Room Light Device is selected
     if(command.equals("ON")){
-      digitalWrite(livingRoomLight, HIGH);
-      Serial.println("Living Room Light is on.");
+      digitalWrite(livingRoomLightPin, HIGH);
+      Serial.println("The Living Room Light is on.");
     }
     else if(command.equals("OFF")){
-      digitalWrite(livingRoomLight, LOW);
-      Serial.println("Living Room Light is on.");
+      digitalWrite(livingRoomLightPin, LOW);
+      Serial.println("The Living Room Light is off.");
     }
     else{
       Serial.println("INVALID COMMAND"); //The serial message was of valid format, but the command selected is not an available command
@@ -70,5 +80,18 @@ void evaluateCommand(String device, String command){ //To be expanded for other 
   }
   else{
     Serial.println("UNKNOWN DEVICE"); //The serial message was of valid format, but the device selected is not designated to be controlled
+  }
+}
+
+// This function is called automatically, and does not need to be called within the code
+void serialEvent(){ //Reads serial data when there is a serial message available
+  while(Serial.available()){ //Redunancy to ensure that reading occurs at proper times
+    char currentSerialCharacter = (char)Serial.read(); 
+    if (currentSerialCharacter == '\n'){ //'\n' refers to the EOL, or end-of-line indicator here
+      serialMessageArrived = true;
+    } 
+    else {
+      serialMessage += currentSerialCharacter;
+    }
   }
 }
