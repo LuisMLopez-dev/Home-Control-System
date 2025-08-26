@@ -1,7 +1,7 @@
 String serialMessage = ""; //The expected format is "DEVICENAME=COMMAND" with each following device name being separated by a space
 boolean serialMessageArrived = false;
 
-const int kitchenLightPin = 5; // Kitchen Light output
+const int kitchenLightPin = 5; //Kitchen Light output
 const int livingRoomLightPin = 6; //Living Room Light output
 const int onboardLED = 13;
 
@@ -15,40 +15,41 @@ void setup(){
 
 void loop(){
   if(serialMessageArrived){
-    int startIndex = 0; //Acts as a cusor for the serial message
+    int currentIndex = 0; //Acts as a cusor for the serial message
     serialMessage.trim(); //Eliminates any new lines or formatting characters
     
-    while(startIndex < serialMessage.length()){
-      int spaceIndex = serialMessage.indexOf(" ", startIndex);
+    while(currentIndex < serialMessage.length()){
+      int spaceIndex = serialMessage.indexOf(" ", currentIndex); //Obtains the index the space in respect to the current index, therefore moves space by space
 
-      if(spaceIndex == -1){
-        int equalSignIndex = serialMessage.indexOf("=");
-        String device = serialMessage.substring(startIndex, equalSignIndex);
-        String command = serialMessage.substring(equalSignIndex + 1);
+      //The body will execute if the original serial message does not have a space, or we have reached to the final device and command pair in the serial message
+      if(spaceIndex == -1){ //No space is present
+        int equalSignIndex = serialMessage.indexOf("="); //Used to separate the device name and command name
+        String device = serialMessage.substring(currentIndex, equalSignIndex); //Obtains the device name
+        String command = serialMessage.substring(equalSignIndex + 1); //Obtains the command name
 
-        startIndex = serialMessage.length();
+        currentIndex = serialMessage.length(); //No more parsing is required, thus ending this while loop
         evaluateSerialMessage(device, command);
       }
-      else if(spaceIndex > 0){
-        String deviceCommandPair = serialMessage.substring(startIndex, spaceIndex);
+      else if(spaceIndex > 0){ //If there is a space present in a valid position
+        String deviceCommandPair = serialMessage.substring(currentIndex, spaceIndex); //Obtains a string of format "DEVICENAME=COMMAND"
 
-        int equalSignIndex = deviceCommandPair.indexOf("=");
-        String device = deviceCommandPair.substring(0, equalSignIndex);
-        String command = deviceCommandPair.substring(equalSignIndex + 1);
+        int equalSignIndex = deviceCommandPair.indexOf("="); //Used to separate the device name and command name
+        String device = deviceCommandPair.substring(0, equalSignIndex); //Obtains device name
+        String command = deviceCommandPair.substring(equalSignIndex + 1); //Obtains command name
 
-        startIndex = spaceIndex + 1;
+        currentIndex = spaceIndex + 1; //Move the cursor to the beginning of the next device name
         evaluateSerialMessage(device, command);
       }
-      else{
+      else{ //The space was in a invalid index
         Serial.println("INVALID SERIAL MESSAGE FORMAT");
       }
     }
-    serialMessage = "";
-    serialMessageArrived = false;
+    serialMessage = ""; //Clears the serial buffer
+    serialMessageArrived = false; //Resets the boolean flag 
   }
 }
 
-void evaluateSerialMessage(String device, String command){ //To be expanded for other devices
+void evaluateSerialMessage(String device, String command){ //To be expanded for other devices and their commands
   device.toUpperCase(); //Formatting for device
   command.toUpperCase(); //Formatting for command
 
@@ -56,11 +57,11 @@ void evaluateSerialMessage(String device, String command){ //To be expanded for 
     if(command.equals("ON")){
       digitalWrite(kitchenLightPin, HIGH);
       Serial.println("The Kitchen Light is on.");
-    } 
+    }
     else if(command.equals("OFF")){
       digitalWrite(kitchenLightPin, LOW);
       Serial.println("The Kitchen Light is off.");
-    } 
+    }
     else{
       Serial.println("INVALID COMMAND"); //The serial message was of valid format, but the command selected is not an available command
     }
@@ -83,14 +84,14 @@ void evaluateSerialMessage(String device, String command){ //To be expanded for 
   }
 }
 
-// This function is called automatically, and does not need to be called within the code
+//This function is called automatically, and does not need to be called within the code
 void serialEvent(){ //Reads serial data when there is a serial message available
-  while(Serial.available()){ //Redunancy to ensure that reading occurs at proper times
+  while(Serial.available()){ //Redundancy to ensure that reading occurs at proper times
     char currentSerialCharacter = (char)Serial.read(); 
     if (currentSerialCharacter == '\n'){ //'\n' refers to the EOL, or end-of-line indicator here
       serialMessageArrived = true;
-    } 
-    else {
+    }
+    else{
       serialMessage += currentSerialCharacter;
     }
   }
