@@ -23,7 +23,7 @@ void loop(){
 
       //The body will execute if the original serial message does not have a space, or we have reached to the final device and command pair in the serial message
       if(spaceIndex == -1){ //No space is present
-        int equalSignIndex = serialMessage.indexOf("="); //Used to separate the device name and command name
+        int equalSignIndex = serialMessage.indexOf("=", currentIndex); //Used to separate the device name and command name, in respect to the cursor
         String device = serialMessage.substring(currentIndex, equalSignIndex); //Obtains the device name
         String command = serialMessage.substring(equalSignIndex + 1); //Obtains the command name
 
